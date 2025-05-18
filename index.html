@@ -1,0 +1,224 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Visualizer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-light: #f0f4f8;
+      --bg-dark: #121212;
+      --text-light: #000;
+      --text-dark: #fff;
+      --card-light: #fff;
+      --card-dark: #1f1f1f;
+      --accent: #4f46e5;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      transition: background 0.6s ease, color 0.6s ease;
+    }
+
+    .dark-mode {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem;
+      animation: fadeIn 1s ease-in;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      animation: slideIn 0.7s ease;
+    }
+
+    button, input {
+      padding: 0.6rem;
+      border-radius: 6px;
+      border: none;
+      font-size: 1rem;
+      margin: 0.3rem;
+      transition: transform 0.2s ease;
+    }
+
+    button:hover, input:hover {
+      transform: scale(1.05);
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 200px;
+    }
+
+    .btn {
+      background-color: var(--accent);
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover {
+      background-color: #3730a3;
+    }
+
+    .chart-container {
+      margin-top: 2rem;
+      background: var(--card-light);
+      padding: 1rem;
+      border-radius: 10px;
+      transition: background 0.3s ease;
+      animation: fadeInUp 1s ease;
+    }
+
+    .dark-mode .chart-container {
+      background: var(--card-dark);
+    }
+
+    canvas {
+      max-height: 400px;
+    }
+
+    .list-view {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--card-light);
+      border-radius: 8px;
+      display: none;
+      animation: fadeIn 0.8s ease-in;
+    }
+
+    .dark-mode .list-view {
+      background: var(--card-dark);
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(-30px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📊 Interactive Data Visualizer</h1>
+      <button class="theme-toggle" onclick="toggleTheme()">🌗 Toggle Theme</button>
+    </div>
+
+    <div>
+      <input type="text" id="labelInput" placeholder="Label" />
+      <input type="number" id="valueInput" placeholder="Value" />
+      <button class="btn" onclick="addData()">Add</button>
+    </div>
+
+    <div>
+      <button class="btn" onclick="changeType('bar')">Bar</button>
+      <button class="btn" onclick="changeType('pie')">Pie</button>
+      <button class="btn" onclick="changeType('line')">Line</button>
+      <button class="btn" onclick="changeType('doughnut')">Doughnut</button>
+      <button class="btn" onclick="showList()">List</button>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="chart"></canvas>
+    </div>
+
+    <div id="listView" class="list-view"></div>
+  </div>
+
+  <script>
+    let chart;
+    let labels = [], values = [], chartType = 'bar';
+
+    function addData() {
+      const label = document.getElementById('labelInput').value.trim();
+      const value = parseFloat(document.getElementById('valueInput').value);
+      if (!label || isNaN(value)) return alert("Enter valid label/value");
+      labels.push(label);
+      values.push(value);
+      document.getElementById('labelInput').value = "";
+      document.getElementById('valueInput').value = "";
+      updateChart();
+    }
+
+    function changeType(type) {
+      chartType = type;
+      document.getElementById('listView').style.display = 'none';
+      document.getElementById('chart').style.display = 'block';
+      updateChart();
+    }
+
+    function showList() {
+      document.getElementById('chart').style.display = 'none';
+      const listView = document.getElementById('listView');
+      listView.innerHTML = labels.map((l, i) => `<p><strong>${l}</strong>: ${values[i]}</p>`).join('');
+      listView.style.display = 'block';
+    }
+
+    function updateChart() {
+      if (chart) chart.destroy();
+      const ctx = document.getElementById('chart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: chartType,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Data',
+            data: values,
+            backgroundColor: [
+              '#4f46e5', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'
+            ],
+            borderWidth: chartType === 'line' ? 3 : 1,
+            borderColor: chartType === 'line' ? '#4f46e5' : '#fff',
+            fill: chartType === 'line' ? false : true
+          }]
+        },
+        options: {
+          animation: {
+            duration: 1000,
+            easing: 'easeOutQuart'
+          },
+          responsive: true,
+          plugins: { legend: { display: true } },
+          scales: chartType === 'bar' || chartType === 'line' ? {
+            y: { beginAtZero: true }
+          } : {}
+        }
+      });
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+  </script>
+</body>
+</html>
